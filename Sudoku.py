@@ -1,0 +1,61 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  6 09:35:03 2018
+
+@author: vcharatsidis
+"""
+import random 
+import copy
+import numpy as np
+
+class SolvedSudoku:
+    
+    def __init__(self, given_board, fixed_boxes):
+        self.board = given_board
+        self.fixed = fixed_boxes
+        self.size = len(given_board)
+        self.solution = (9, 9)
+        self.solution = np.zeros(self.solution)
+        
+        
+    def free_boxes(self):
+        free_boxes = []
+        
+        for row in range(self.size):
+            for col in range(self.size):
+                if not self.fixed[row][col]:
+                    free_boxes.append(row*self.size + col)
+        
+        return free_boxes
+            
+        
+    def board_reduction(self, reduction):
+        reduced_board = copy.deepcopy(self.board)
+        free_boxes = self.free_boxes()
+        indexes_to_erase = random.sample(range(0, len(free_boxes)), reduction)
+        
+        for index in indexes_to_erase:
+            to_erase = free_boxes[index]
+            col = to_erase % self.size 
+            row = (to_erase) // self.size
+            
+            print(to_erase)
+            print("row "+ str(row))
+            print("col "+ str(col))
+            
+            self.solution[row][col] = reduced_board[row][col]
+            reduced_board[row][col] = 0
+    
+        return reduced_board        
+          
+    
+    def board_to_row(self, board):
+        row_board = []
+        
+        for row in range(self.size):
+            for col in range(self.size):
+                row_board.append(row*self.size + col)
+        
+        return row_board
+        
+     
