@@ -7,6 +7,7 @@ Created on Mon Aug  6 12:49:15 2018
 
 from Sudoku import SolvedSudoku
 import tensorflow as tf
+import numpy as np
 
 hardestSudoku = [[8, 1, 2, 7, 5, 3, 6, 4, 9],
                  [9, 4, 3, 6, 8, 2, 1, 7, 5],
@@ -35,26 +36,25 @@ training_iteration = 10000
 batch_size = 1
 display_step = 500
 
-#TODO is it "int"?
-x = tf.placeholder("int", [None,81])
-y = tf.placeholder("int", [None,81])
+x = tf.placeholder("float", [None, 81], name = "reducedBoards")
+y = tf.placeholder("float", name = "solutions")
 
-W = tf.Variable(tf.zeros[81,81])
-b = tf.Variable(tf.zeros[81])
+W = tf.Variable(tf.zeros([81,81]))
+b = tf.Variable(tf.zeros([81]))
 
 with tf.name_scope("Wx_b") as scope:
     model = tf.nn.softmax(tf.matmul(x, W) + b)
     
 with tf.name_scope("cost_function") as scope:
     cost_function = -tf.reduce_sum(y * tf.log(model))
-    tf.scalar_summary("cost_function", cost_function)
+    tf.summary.scalar("cost_function", cost_function)
     
 with tf.name_scope("train") as scope:
     optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost_function)
 
 init = tf.initialize_all_variables()
 
-merged_summary_op = tf.merge_all_summaries()
+merged_summary_op = tf.summary.merge_all()
 
 with tf.Session() as sess:
     sess.run(init)
@@ -62,22 +62,22 @@ with tf.Session() as sess:
     for iteration in range(training_iteration):
         avg_cost = 0.
         
-        x = reducer.board_to_row(reducer.board_reduction(1))
-        y = reducer.board_to_row(reducer.solution)
+        xs = reducer.board_to_row(reducer.board_reduction(1))
+        xs = np.array(xs).reshape(1, 81)
+        
+        ys = reducer.board_to_row(reducer.solution)
+        ys = np.array(ys).reshape(1, 81)
         #batch_xs, batch_ys = mnist.train.next_batch(batch_size)
         
-        sess.run(optimizer, feed_dict = {x: x, y: y})
+        sess.run(optimizer, feed_dict = {x: xs, y: ys})
         
-        avg_cost += sess.run(cost_function, feed_dict = {x: x, y: y}) / training_iteration
+        avg_cost += sess.run(cost_function, feed_dict = {x: xs, y: ys}) / training_iteration
         
-        summary_str = sess.run(merged_summary_op, feed_dict = {x: x, y: y})
-        summary_writer.add_summary(summary_str, iteration = total_batch +i)
+        summary_str = sess.run(merged_summary_op, feed_dict = {x: xs, y: ys})
+       # summary_writer.add_summary(summary_str, iteration = total_batch +i)
             
         if iteration % display_step == 0:
             print("Iteration:", '%04d' % (iteration+1), "cost = ", "{:.9f}".format(avg_cost))
             
     print("Tuning completed!")
     
-    predictions = tf.equal(tf.argmax(mode, 1), tf.argmax(y, 1))
-    accuracy = tf.reduce_mean(tf.cast(predictions, "float"))
-    print("Accuracy:", accuracy.eval({x: mnist.test.images, y: mnist.test.labels}))

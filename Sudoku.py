@@ -30,6 +30,8 @@ class SolvedSudoku:
             
         
     def board_reduction(self, reduction):
+        self.solution = (9, 9)
+        self.solution = np.zeros(self.solution)
         reduced_board = copy.deepcopy(self.board)
         free_boxes = self.free_boxes()
         indexes_to_erase = random.sample(range(0, len(free_boxes)), reduction)
@@ -38,10 +40,6 @@ class SolvedSudoku:
             to_erase = free_boxes[index]
             col = to_erase % self.size 
             row = (to_erase) // self.size
-            
-            print(to_erase)
-            print("row "+ str(row))
-            print("col "+ str(col))
             
             self.solution[row][col] = reduced_board[row][col]
             reduced_board[row][col] = 0
@@ -54,8 +52,9 @@ class SolvedSudoku:
         
         for row in range(self.size):
             for col in range(self.size):
-                row_board.append(row*self.size + col)
+                row_board.append(board[row][col])
         
-        return row_board
+        row_board_column = np.array(row_board).reshape(1, 81)
+        return row_board_column
         
      
