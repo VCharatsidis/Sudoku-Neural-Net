@@ -28,20 +28,24 @@ hardestSudoku_fixed = [[True, False, False, False, False, False, False, False, F
                        [False, False, True, True, False, False, False, True, False],
                        [False, True, False, False, False, False, True, False, False]]
 
+def one_hot(array):
+    targets = np.array(np.asarray(array).reshape(-1))
+    one_hot = np.eye(10)[targets]
+    return one_hot
+
 reducer = SolvedSudoku(hardestSudoku, hardestSudoku_fixed)
 
-nodes1 = 81
-nodes2 = 81
+nodes1 = 810
 
-x = tf.placeholder("float32", [None, 81], name = "reducedBoards")
-y = tf.placeholder("float32", [None, 81], name = "solutions")
+x = tf.placeholder("float32", [1, 810], name = "reducedBoards")
+y = tf.placeholder("float32", [1, 810], name = "solutions")
 
 def nnmodel(data):
-    hl1 = {'weights' : tf.Variable(tf.random_normal([81, nodes1])),
+    hl1 = {'weights' : tf.Variable(tf.random_normal([810, nodes1])),
            'biases' : tf.Variable(tf.random_normal([nodes1]))}
     
-    output_layer = {'weights' : tf.Variable(tf.random_normal([nodes1, 81])),
-           'biases' : tf.Variable(tf.random_normal([81]))}
+    output_layer = {'weights' : tf.Variable(tf.random_normal([nodes1, 810])),
+           'biases' : tf.Variable(tf.random_normal([810]))}
     
     lay1 = tf.matmul(data, hl1['weights']) + hl1['biases']
     lay1 = tf.nn.relu(lay1)
@@ -49,33 +53,41 @@ def nnmodel(data):
     output = tf.matmul(lay1, output_layer['weights']) + output_layer['biases']
     
     print("hi")
-    #board = tf.reshape(prediction,[9,9])
-    #output = tf.Print(output, [output])
+
     return output
+
+def prepare_data(x):
+    ohx = one_hot(x)
+    x_reshaped = np.reshape(ohx, 810)
+    x_final = np.asarray([x_reshaped])
+    
+    return x_final
 
 def train_nn(x):
     prediction = nnmodel(x)
-    cost = tf.losses.mean_squared_error(labels = y, predictions = prediction)
+    cost = tf.losses.mean_squared_error(labels = y, predictions = prediction) # 0.4-0.6
+    #cost = tf.losses.absolute_difference(labels = y, predictions = prediction) 0.4-0.8
+    #cost = tf.losses.log_loss(labels = y, predictions = prediction) nan
+   
     optimizer = tf.train.AdamOptimizer().minimize(cost)
     
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
         
-        for i in range(100):
+        for i in range(30000):
             xs = reducer.board_to_row(reducer.board_reduction(1))
-            xs = xs.astype(float)
+            x_prepared = prepare_data(xs)
             
             ys = reducer.board_to_row(reducer.solution)
-            ys = ys.astype(float)
-             
-            _, c = sess.run([optimizer, cost], feed_dict = {x: xs, y:ys})
-            if (i % 10) == 0:
-                print("cost "+str(c))
-    
-    board = tf.reshape(prediction,[9,9])
-    tf.print(board, [board])
+            y_prepared = prepare_data(ys)
         
-train_nn(x)       
+            _, c = sess.run([optimizer, cost], feed_dict = {x: x_prepared, y:y_prepared})
+            if (i % 3000) == 0:
+                print("cost "+str(c))
+        
+train_nn(x) 
+
+      
         
         
         

@@ -15,7 +15,7 @@ class SolvedSudoku:
         self.fixed = fixed_boxes
         self.size = len(given_board)
         self.solution = (9, 9)
-        self.solution = np.zeros(self.solution)
+        self.solution = np.zeros(self.solution).astype(int)
         
         
     def free_boxes(self):
@@ -24,14 +24,14 @@ class SolvedSudoku:
         for row in range(self.size):
             for col in range(self.size):
                 if not self.fixed[row][col]:
-                    free_boxes.append(row*self.size + col)
+                    free_boxes.append(row * self.size + col)
         
         return free_boxes
             
         
     def board_reduction(self, reduction):
         self.solution = (9, 9)
-        self.solution = np.zeros(self.solution)
+        self.solution = np.zeros(self.solution).astype(int)
         reduced_board = copy.deepcopy(self.board)
         free_boxes = self.free_boxes()
         indexes_to_erase = random.sample(range(0, len(free_boxes)), reduction)
