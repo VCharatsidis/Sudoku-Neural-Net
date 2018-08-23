@@ -35,7 +35,8 @@ def one_hot(array):
 
 reducer = SolvedSudoku(hardestSudoku, hardestSudoku_fixed)
 
-nodes1 = 810
+nodes1 = 1
+nodes2 = 1
 
 x = tf.placeholder("float32", [1, 810], name = "reducedBoards")
 y = tf.placeholder("float32", [1, 810], name = "solutions")
@@ -44,16 +45,31 @@ def nnmodel(data):
     hl1 = {'weights' : tf.Variable(tf.random_normal([810, nodes1])),
            'biases' : tf.Variable(tf.random_normal([nodes1]))}
     
-    output_layer = {'weights' : tf.Variable(tf.random_normal([nodes1, 810])),
+    hl2 = {'weights' : tf.Variable(tf.random_normal([nodes1, nodes2])),
+           'biases' : tf.Variable(tf.random_normal([nodes2]))}
+    
+    output_layer = {'weights' : tf.Variable(tf.random_normal([nodes2, 810])),
            'biases' : tf.Variable(tf.random_normal([810]))}
     
     lay1 = tf.matmul(data, hl1['weights']) + hl1['biases']
     lay1 = tf.nn.relu(lay1)
     
-    output = tf.matmul(lay1, output_layer['weights']) + output_layer['biases']
+    lay2 = tf.matmul(lay1, hl2['weights']) + hl2['biases']
+    lay2 = tf.nn.sigmoid(lay2)
+    
+    output = tf.matmul(lay2, output_layer['weights']) + output_layer['biases']
+    
+    '''
+    b = tf.where(
+        tf.less(output, tf.zeros_like(output) + 0.5),
+        tf.zeros_like(output),
+        tf.ones_like(output)
+    )
+    '''
     
     print("hi")
-
+    print(output.shape)
+    
     return output
 
 def prepare_data(x):
@@ -74,16 +90,19 @@ def train_nn(x):
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
         
-        for i in range(30000):
-            xs = reducer.board_to_row(reducer.board_reduction(1))
+        for i in range(10000):
+            xs = reducer.board_to_row(reducer.board_reduction(60))
             x_prepared = prepare_data(xs)
             
             ys = reducer.board_to_row(reducer.solution)
             y_prepared = prepare_data(ys)
         
             _, c = sess.run([optimizer, cost], feed_dict = {x: x_prepared, y:y_prepared})
-            if (i % 3000) == 0:
+            
+            if (i % 2000) == 0:
+               
                 print("cost "+str(c))
+
         
 train_nn(x) 
 
