@@ -81,7 +81,22 @@ def prepare_data(x):
 
 def train_nn(x):
     prediction = nnmodel(x)
-    cost = tf.losses.mean_squared_error(labels = y, predictions = prediction) # 0.4-0.6
+    
+    '''
+    with tf.Session() as sess1:
+        xs = reducer.board_to_row(reducer.board_reduction(20))
+        x_prepared = prepare_data(xs)
+       
+        pred = sess1.run(nnmodel(np.float32(x_prepared)))
+        v = tf.Print(pred, [pred], "prediction is ")
+        v.eval(feed_dict = {x: x_prepared})
+        print(v.shape)
+        print(v)
+    '''
+    
+    preds = tf.Print(prediction , [prediction], "prediction : ")
+    v = tf.reshape(preds, [81,10])
+    cost = tf.losses.mean_squared_error(labels = y, predictions = preds ) # 0.4-0.6
     #cost = tf.losses.absolute_difference(labels = y, predictions = prediction) 0.4-0.8
     #cost = tf.losses.log_loss(labels = y, predictions = prediction) nan
    
@@ -91,7 +106,7 @@ def train_nn(x):
         sess.run(tf.initialize_all_variables())
         
         for i in range(10000):
-            xs = reducer.board_to_row(reducer.board_reduction(60))
+            xs = reducer.board_to_row(reducer.board_reduction(20))
             x_prepared = prepare_data(xs)
             
             ys = reducer.board_to_row(reducer.solution)
@@ -100,7 +115,9 @@ def train_nn(x):
             _, c = sess.run([optimizer, cost], feed_dict = {x: x_prepared, y:y_prepared})
             
             if (i % 2000) == 0:
-               
+                print(xs)
+                print("")
+                print(ys)
                 print("cost "+str(c))
 
         
